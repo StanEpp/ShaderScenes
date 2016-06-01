@@ -33,6 +33,8 @@ uniform sg_LightSourceParameters sg_LightSource[8];
 
 uniform int photonID;
 
+out vec4 outValue;
+
 void main(void){
 	uint lightPatch = imageLoad(lightpatchTex, ex_PolygonID).x;
 	uint lightID = 1;
@@ -55,4 +57,6 @@ void main(void){
 		lightPatch &= ~(lightIDBitMask); 
 		lightID++;
 	}
+	
+	outValue = vec4(normal, 0);
 }

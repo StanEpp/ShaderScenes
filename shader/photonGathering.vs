@@ -17,7 +17,7 @@ flat out int ex_PolygonID;
 
 void main(void){
   ex_PolygonID = int(sg_PolygonID);
-  position = sg_matrix_cameraToWorld * sg_matrix_modelToCamera * vec4(sg_Position, 1.0);
+  position = (sg_matrix_cameraToWorld * sg_matrix_modelToCamera * vec4(sg_Position, 1.0)).xyz;
   normal = normalize((sg_matrix_cameraToWorld * sg_matrix_modelToCamera * vec4(sg_Normal, 0.0)).xyz);
   color = sg_Color;
   gl_Position = sg_matrix_modelToClipping * vec4(sg_Position, 1.0);
