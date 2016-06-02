@@ -18,16 +18,18 @@ lightPatchRenderer.setCamera(PADrend.getActiveCamera());
 var photonSampler = new MinSG.ThesisStanislaw.PhotonSampler;
 photonSampler.setApproximatedScene(approxNode);
 photonSampler.setCamera(PADrend.getActiveCamera());
+photonSampler.setPhotonNumber(100);
 //photonSampler.deactivate();
 
 var phongGI = new MinSG.ThesisStanislaw.PhongGI;
 //phongGI.setPhotonSampler(photonSampler);
 
-/*var photonRenderer = new MinSG.ThesisStanislaw.PhotonRenderer;
+var photonRenderer = new MinSG.ThesisStanislaw.PhotonRenderer();
 photonRenderer.setApproximatedScene(approxNode);
-photonRenderer.setSamplingResolution(64, 64);
+photonRenderer.setSamplingResolution(512,512);
 photonRenderer.setLightPatchRenderer(lightPatchRenderer); 
-photonRenderer.setPhotonSampler(photonSampler);*/
+photonRenderer.setPhotonSampler(photonSampler);
+photonRenderer.setSpotLights(spotLights);
 
 var approxRenderer = new MinSG.ThesisStanislaw.ApproxSceneDebug;
 approxRenderer.setApproximatedScene(approxNode);
@@ -40,5 +42,6 @@ approxRenderer.deactivate();
 node.addState(phongGI);
 node.addState(lightPatchRenderer);
 node.addState(photonSampler);
+node.addState(photonRenderer);
 
 PADrend.selectScene(node);
