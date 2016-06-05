@@ -26,7 +26,7 @@ var phongGI = new MinSG.ThesisStanislaw.PhongGI;
 
 var photonRenderer = new MinSG.ThesisStanislaw.PhotonRenderer();
 photonRenderer.setApproximatedScene(approxNode);
-photonRenderer.setSamplingResolution(512,512);
+photonRenderer.setSamplingResolution(32,32);
 photonRenderer.setLightPatchRenderer(lightPatchRenderer); 
 photonRenderer.setPhotonSampler(photonSampler);
 photonRenderer.setSpotLights(spotLights);
@@ -39,9 +39,9 @@ approxNode.addState(indexingState);
 approxNode.addState(approxRenderer);
 approxRenderer.deactivate();
 
-node.addState(phongGI);
 node.addState(lightPatchRenderer);
 node.addState(photonSampler);
 node.addState(photonRenderer);
+node.addState(phongGI);
 
 PADrend.selectScene(node);

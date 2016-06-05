@@ -27,6 +27,12 @@ struct sg_LightSourceParameters {
 	float exponent, cosCutoff;			// spot light parameters
 };
 
+struct Photon{
+	vec4 diffuse;
+	vec4 position_ws;
+	vec4 normal_ws;
+};
+
 uniform bool sg_textureEnabled[8];
 uniform bool sg_specularMappingEnabled, sg_normalMappingEnabled;
 uniform sg_MaterialParameters			sg_Material;
@@ -42,8 +48,13 @@ uniform sampler2D 	sg_shadowTexture;
 
 layout(binding = 0) uniform isampler2D	samplingTexture;
 
+layout (std430, binding = 1) buffer PhotonBuffer {
+	Photon photons[];
+};
+
 uniform sampler2D lastColorBuffer;
 uniform sampler2D lastDepthBuffer;
+uniform mat4 sg_matrix_worldToCamera;
 uniform mat4 sg_matrix_cameraToWorld;
 uniform mat4 sg_matrix_cameraToClipping;  // eye->cam move to sg_helper!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 uniform mat4 sg_lastProjectionMatrix;  
@@ -82,6 +93,18 @@ uniform vec2 _shadowSamplingPoints[16] = vec2[16](
 	vec2(-0.366311,-0.174337),
 	vec2(0.541415,0.630838),
 	vec2(0.0607513,0.528244)
+);
+
+uniform ivec2 _photonSamplingPos[9] = ivec2[9](
+	ivec2(-1, 1),
+	ivec2(0, 1),
+	ivec2(1, 1),
+	ivec2(-1, 0),
+	ivec2(0, 0),
+	ivec2(1, 0),
+	ivec2(-1, -1),
+	ivec2(0, -1),
+	ivec2(1, -1)
 );
 
 
@@ -345,6 +368,63 @@ float getShadow() {
 	return sum;
 }
 
+vec4 gatherIndirectLight(){
+	ivec2 size = ivec2(12, 12);//TODO: Add size as uniform //textureSize(samplingTexture, 0);
+	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
+	scPos.x /= 1280.f; scPos.y /= 720.f;
+	
+	ivec2 sPos = ivec2(int(float(size.x) * scPos.x), int(float(size.y) * scPos.y));
+	
+	vec4 ret = vec4(0.f);
+	
+	for(int i = 0; i < 9; i++ ){
+		int ID = texelFetch(samplingTexture, sPos + _photonSamplingPos[i], 0).x;
+		//int ID = texelFetch(samplingTexture, ivec2(10,10) + _photonSamplingPos[i], 0).x;
+		if(ID < 0) continue;
+		Photon p = photons[i];
+		if(p.diffuse.a < 0.1f) continue;
+		ret.rgb = p.diffuse.rgb / p.diffuse.a;
+		//ret.rgb += vec3(0.5f, 0, 0);
+	}
+	
+	ret.xyz /= float(9);//9.f;
+	//ret = vec4(float(size.x), 0, 0, 0);
+	//ret.rgb = vec3(12 * 0.5, 0, 0) / 12.f;
+	return ret;
+}
+
+void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lightSum){
+	sg_LightSourceParameters indirectPointLight;
+	
+	// Treat photons as point light sources
+	indirectPointLight.type = POINT;
+	indirectPointLight.diffuse = vec4(0);
+	indirectPointLight.ambient = vec4(0);
+	indirectPointLight.specular = vec4(0);
+	indirectPointLight.constant = 1.f;
+	indirectPointLight.linear = 0.f;
+	indirectPointLight.quadratic = 0.f;
+	
+	ivec2 size = ivec2(12, 12);//TODO: Add size as uniform
+	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
+	scPos.x /= 1280.f; scPos.y /= 720.f;
+	
+	ivec2 sPos = ivec2(int(float(size.x) * scPos.x), int(float(size.y) * scPos.y));
+	
+	for(int i = 0; i < 9; i++ ){
+		int ID = texelFetch(samplingTexture, sPos + 2 * _photonSamplingPos[i], 0).x;
+		//int ID = texelFetch(samplingTexture, ivec2(10,10) + _photonSamplingPos[i], 0).x;
+		if(ID < 0) continue;
+		Photon p = photons[i];
+		if(p.diffuse.a < 0.1f) continue;
+		indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
+		indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
+		indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
+		addLighting(indirectPointLight, surface.position_cs, surface.normal_cs, 0, lightSum);
+	}
+	
+}
+
 void calcLighting(in SurfaceProperties surface, out CompositeColor color){
 	CompositeColor lightSum;
 	lightSum.ambient = vec4(0.0);
@@ -367,6 +447,9 @@ void calcLighting(in SurfaceProperties surface, out CompositeColor color){
 			break;
 		sg_addLight(i,surface.position_cs, surface.normal_cs, surface.shininess, lightSum);
 	}
+	
+	// Compute indirect lighting from photons
+	calcIndirectLighting(surface, lightSum);
 
 	lightSum.ambient.a = lightSum.diffuse.a = lightSum.specular.a = 1.0;
 
@@ -384,8 +467,13 @@ void main (void) {
 	surface.position_cs = var_position_hcs.xyz / var_position_hcs.w;
 	surface.normal_cs = normalize(var_normal_cs);
 
+	vec4 indirectLight = gatherIndirectLight();
+	
 	calcSurfaceProperties(surface);				// get surface properties (material, textures, ...)
 	addSurfaceEffects(surface);					// optionally add a surface effect (e.g. add snow)
+	
+	//surface.ambient = vec4(0);
+	//surface.diffuse += vec4(indirectLight.xyz, 0);
 	
 	CompositeColor color;
 	calcLighting(surface,color);				// add lighting and calculate color

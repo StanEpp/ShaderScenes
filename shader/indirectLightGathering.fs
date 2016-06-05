@@ -24,10 +24,6 @@ struct sg_MaterialParameters {
 	float shininess;
 };
 
-struct Photon{
-	float R, G, B, A;
-};
-
 smooth in vec3 normal_cs;
 smooth in vec3 position_cs;
 smooth in vec3 vertexColor;
@@ -35,16 +31,10 @@ flat in int ex_PolygonID;
 
 layout(r32ui, binding = 0) restrict uniform uimageBuffer lightpatchTex;
 
-layout (std430, binding = 1) buffer PhotonBuffer {
-	Photon photons[];
-};
-
 uniform sg_LightSourceParameters sg_LightSource[8];
 uniform int						 sg_lightCount;
 uniform sg_MaterialParameters	 sg_Material;
 uniform bool					 sg_useMaterials;
-
-uniform int photonID;
 
 layout(location = 0) out vec4 outValue;
 layout(location = 1) out vec4 outNormal;
@@ -117,7 +107,7 @@ void main(void){
 	sg_initSurfaceFromSGMaterial(surface);
 	
 	vec4 diffLightSum = vec4(0.0);
-	if(lightPatch.x == 0) diffLightSum = vec4(normal_cs, 0.0);
+	//if(lightPatch.x == 0) diffLightSum = vec4(normal_cs, 0.0);
 	while(lightPatch != 0){
 		uint lightIDBitMask = 1 << (lightID-1);
 		uint lightIsUsed = lightPatch & lightIDBitMask;
