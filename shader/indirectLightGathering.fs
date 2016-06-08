@@ -24,6 +24,13 @@ struct sg_MaterialParameters {
 	float shininess;
 };
 
+struct Photon{
+	mat4 viewMat;
+	vec4 diffuse;
+	vec4 position_ws;
+	vec4 normal_ws;
+};
+
 smooth in vec3 normal_cs;
 smooth in vec3 position_cs;
 smooth in vec3 vertexColor;
@@ -31,10 +38,15 @@ flat in int ex_PolygonID;
 
 layout(r32ui, binding = 0) restrict uniform uimageBuffer lightpatchTex;
 
+layout (std430, binding = 1) buffer PhotonBuffer {
+	Photon photons[];
+};
+
 uniform sg_LightSourceParameters sg_LightSource[8];
 uniform int						 sg_lightCount;
 uniform sg_MaterialParameters	 sg_Material;
 uniform bool					 sg_useMaterials;
+uniform int 					 photonID;
 
 layout(location = 0) out vec4 outValue;
 layout(location = 1) out vec4 outNormal;
@@ -72,7 +84,11 @@ void addLighting(in sg_LightSourceParameters light, in vec3 position_cs, in vec3
 }
 
 void calcLighting(in uint sgLightNr, in SurfaceProperties surface, inout vec4 diffLightSum){
-	addLighting(sg_LightSource[sgLightNr],surface.position_cs, surface.normal_cs, surface.shininess, diffLightSum);
+	sg_LightSourceParameters light = sg_LightSource[sgLightNr];
+	light.position = (photons[photonID].viewMat * vec4(light.position, 1)).xyz;
+	light.direction = (photons[photonID].viewMat * vec4(light.direction, 0)).xyz;
+	
+	addLighting(light,surface.position_cs, surface.normal_cs, surface.shininess, diffLightSum);
 
 	diffLightSum = surface.diffuse * diffLightSum + surface.emission;
 	
@@ -107,23 +123,21 @@ void main(void){
 	sg_initSurfaceFromSGMaterial(surface);
 	
 	vec4 diffLightSum = vec4(0.0);
-	//if(lightPatch.x == 0) diffLightSum = vec4(normal_cs, 0.0);
-	while(lightPatch != 0){
-		uint lightIDBitMask = 1 << (lightID-1);
-		uint lightIsUsed = lightPatch & lightIDBitMask;
-		
-		if(lightIsUsed != 0){
-			//sg_LightSourceParameters light = sg_LightSource[lightID - 1];
+	if(lightPatch.x == 0) diffLightSum = vec4(normal_cs, 0.0);
+	
+	Photon p = photons[photonID];
+	if(p.normal_ws.x < 0.01f && p.normal_ws.y < 0.01f && p.normal_ws.z < 0.01f){
+		while(lightPatch != 0){
+			uint lightIDBitMask = 1 << (lightID-1);
+			uint lightIsUsed = lightPatch & lightIDBitMask;
 			
-			calcLighting(lightID, surface, diffLightSum);
+			if(lightIsUsed != 0){
+				calcLighting(lightID, surface, diffLightSum);
+			}
 			
-			//atomicAdd(photons[photonID].R, indirectLight.r);
-			//atomicAdd(photons[photonID].G, indirectLight.g);
-			//atomicAdd(photons[photonID].B, indirectLight.b);
+			lightPatch &= ~(lightIDBitMask); 
+			lightID++;
 		}
-		
-		lightPatch &= ~(lightIDBitMask); 
-		lightID++;
 	}
 	
 	outValue = diffLightSum;

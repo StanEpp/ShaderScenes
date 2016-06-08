@@ -2,6 +2,7 @@
 #extension GL_NV_shader_atomic_float : require
 
 struct Photon{
+	mat4 viewMat;
 	vec4 diffuse;
 	vec4 position_ws;
 	vec4 normal_ws;
@@ -14,8 +15,6 @@ layout (std430, binding = 1) buffer PhotonBuffer {
 };
 
 uniform int photonID;
-uniform vec3 photonPos_ws;
-uniform vec3 photonNormal_ws;
 
 layout(location = 0) uniform sampler2D indirectLightTex;
 
@@ -28,7 +27,4 @@ void main(void){
 	atomicAdd(photons[photonID].diffuse.g, indirectLight.g);
 	atomicAdd(photons[photonID].diffuse.b, indirectLight.b);
 	atomicAdd(photons[photonID].diffuse.a, 1.f);
-	
-	photons[photonID].position_ws = vec4(photonPos_ws, 1.f);
-	photons[photonID].normal_ws = vec4(photonNormal_ws, 0.f);
 }

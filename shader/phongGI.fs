@@ -28,6 +28,7 @@ struct sg_LightSourceParameters {
 };
 
 struct Photon{
+	mat4 viewMat;
 	vec4 diffuse;
 	vec4 position_ws;
 	vec4 normal_ws;
@@ -368,31 +369,6 @@ float getShadow() {
 	return sum;
 }
 
-vec4 gatherIndirectLight(){
-	ivec2 size = ivec2(12, 12);//TODO: Add size as uniform //textureSize(samplingTexture, 0);
-	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
-	scPos.x /= 1280.f; scPos.y /= 720.f;
-	
-	ivec2 sPos = ivec2(int(float(size.x) * scPos.x), int(float(size.y) * scPos.y));
-	
-	vec4 ret = vec4(0.f);
-	
-	for(int i = 0; i < 9; i++ ){
-		int ID = texelFetch(samplingTexture, sPos + _photonSamplingPos[i], 0).x;
-		//int ID = texelFetch(samplingTexture, ivec2(10,10) + _photonSamplingPos[i], 0).x;
-		if(ID < 0) continue;
-		Photon p = photons[i];
-		if(p.diffuse.a < 0.1f) continue;
-		ret.rgb = p.diffuse.rgb / p.diffuse.a;
-		//ret.rgb += vec3(0.5f, 0, 0);
-	}
-	
-	ret.xyz /= float(9);//9.f;
-	//ret = vec4(float(size.x), 0, 0, 0);
-	//ret.rgb = vec3(12 * 0.5, 0, 0) / 12.f;
-	return ret;
-}
-
 void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lightSum){
 	sg_LightSourceParameters indirectPointLight;
 	
@@ -466,8 +442,6 @@ void main (void) {
 	SurfaceProperties surface;
 	surface.position_cs = var_position_hcs.xyz / var_position_hcs.w;
 	surface.normal_cs = normalize(var_normal_cs);
-
-	vec4 indirectLight = gatherIndirectLight();
 	
 	calcSurfaceProperties(surface);				// get surface properties (material, textures, ...)
 	addSurfaceEffects(surface);					// optionally add a surface effect (e.g. add snow)

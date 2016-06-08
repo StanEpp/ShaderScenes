@@ -1,9 +1,20 @@
 #version 430
 
+struct Photon{
+	mat4 viewMat;
+	vec4 diffuse;
+	vec4 position_ws;
+	vec4 normal_ws;
+};
+
 in vec3 sg_Position;
 in vec3 sg_Normal;
 in vec3 sg_Color;
 in uint sg_PolygonID;
+
+layout (std430, binding = 1) buffer PhotonBuffer {
+	Photon photons[];
+};
 
 uniform mat4 sg_matrix_cameraToWorld;
 uniform mat4 sg_matrix_worldToCamera;
@@ -12,31 +23,22 @@ uniform mat4 sg_matrix_modelToCamera;
 uniform mat4 sg_matrix_modelToClipping;
 uniform mat4 perspective;
 
+uniform int photonID;
+
 smooth out vec3 normal_cs;
 smooth out vec3 position_cs;
 smooth out vec3 vertexColor; 
-
 flat out int ex_PolygonID;
 
-mat4 modelToWorld() {return sg_matrix_cameraToWorld * sg_matrix_modelToCamera;}
-
 void main(void){
-	vec3 E = vec3(12.5f, 14.89f, -31.0577f);
-	vec3 C = E + vec3(0.f, 0.f, -1.f);
-	vec3 Up = normalize(vec3(0.f, 0.f, 1.f));
-	vec3 F = normalize(C - E);
-	vec3 S = normalize(cross(F, Up));
-	vec3 U = normalize(cross(S, F));
-	
-	mat4x4 mv = mat4x4(1.f);
-	mv[0] = vec4(S, 0);
-	mv[1] = vec4(U, 0);
-	mv[2] = vec4(-1.f * F, 0);
-	mv[3] = vec4(-1.f * E, 1);
+	mat4 viewMat = photons[photonID].viewMat;
+	mat4 modelToWorldMat = sg_matrix_cameraToWorld * sg_matrix_modelToCamera;
 	
 	ex_PolygonID = int(sg_PolygonID);
-	position_cs = (sg_matrix_modelToCamera * vec4(sg_Position, 1.0)).xyz;
-	normal_cs = normalize((sg_matrix_modelToCamera * vec4(sg_Normal, 0.0)).xyz);
 	vertexColor = sg_Color;
-	gl_Position = sg_matrix_modelToClipping * vec4(sg_Position, 1.0);
+	
+	position_cs = (viewMat * modelToWorldMat * vec4(sg_Position, 1.0)).xyz;
+	normal_cs = normalize((viewMat * modelToWorldMat * vec4(sg_Normal, 0.0)).xyz);
+	
+	gl_Position = sg_matrix_cameraToClipping * viewMat * modelToWorldMat * vec4(sg_Position, 1.0);
 }
