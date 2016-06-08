@@ -14,5 +14,5 @@ uniform mat4 sg_matrix_modelToClipping;
 void main() {
 	texCoord = sg_TexCoord0;
 	photonID = sg_PhotonID;
-	gl_Position = sg_matrix_cameraToClipping * vec4(sg_Position, 1.0);
+	gl_Position = vec4(sg_Position, 1.0);
 }

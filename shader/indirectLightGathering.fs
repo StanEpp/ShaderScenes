@@ -126,7 +126,7 @@ void main(void){
 	if(lightPatch.x == 0) diffLightSum = vec4(normal_cs, 0.0);
 	
 	Photon p = photons[photonID];
-	if(p.normal_ws.x < 0.01f && p.normal_ws.y < 0.01f && p.normal_ws.z < 0.01f){
+	if(length(p.normal_ws) > 0.01f){
 		while(lightPatch != 0){
 			uint lightIDBitMask = 1 << (lightID-1);
 			uint lightIsUsed = lightPatch & lightIDBitMask;
