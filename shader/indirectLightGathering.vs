@@ -41,4 +41,6 @@ void main(void){
 	normal_cs = normalize((viewMat * modelToWorldMat * vec4(sg_Normal, 0.0)).xyz);
 	
 	gl_Position = sg_matrix_cameraToClipping * viewMat * modelToWorldMat * vec4(sg_Position, 1.0);
+	
+	//photons[photonID].viewMat = modelToWorldMat;
 }

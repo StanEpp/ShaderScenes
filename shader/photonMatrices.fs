@@ -18,6 +18,7 @@ layout(binding = 0) uniform sampler2D posTexture;
 layout(binding = 1) uniform sampler2D normalTexture;
 
 uniform mat4 sg_matrix_worldToCamera; //Matrix which is provided from the 
+uniform mat4 sg_matrix_modelToClipping;
 
 out vec4 color;
 
@@ -30,7 +31,7 @@ void main(void) {
 	}
 	Dir = normalize(Dir);
 	
-	// Taken from: MinSG::Transformations::rotateToWorldDir()
+	//---------------------- Taken from: MinSG::Transformations::rotateToWorldDir() -----------------------
 	vec3 relRight = vec3(0);
 	vec3 relDir = -1.f * Dir;
 	if(abs(relDir.y) < 0.99f ){
@@ -38,14 +39,17 @@ void main(void) {
 	} else {
 		relRight = cross(relDir, vec3(1, 0, 0));
 	}
+	
 	vec3 Up = cross(relDir, -1.f * relRight);
+	// -----------------------------------------------------------------------------------------------------
 	
 	
 	// vec3 Pos = vec3(95, 0, 0); 
 	// vec3 Pos = texture(posTexture, texCoord).xyz;
 	vec3 Pos = texture(posTexture, vec2(0.5f, 0.5f)).xyz;
 	
-	// Taken from: Geometry::_Matrix3x3::setRotation()
+	// 
+	// ---------------------- Taken from: Geometry::_Matrix3x3::setRotation() ---------------------------
 	vec3 bZ = -1.f * Dir;
 	vec3 bX = normalize(cross(Up, bZ));
 	vec3 bY = cross(bZ, bX);
@@ -56,13 +60,9 @@ void main(void) {
 	mat[1] = vec4(bY, 0);
 	mat[2] = vec4(bZ, 0);
 	mat[3] = vec4(-1.f * Pos, 1);
+	// -----------------------------------------------------------------------------------------------------
 	
-	// mat[0] = vec4(tempMat[0], 0);
-	// mat[1] = vec4(tempMat[1], 0);
-	// mat[2] = vec4(tempMat[2], 0);
-	// mat[3] = vec4(-1.f * Pos, 1);
-	
-	photons[photonID].viewMat = sg_matrix_worldToCamera;
+	photons[photonID].viewMat = mat;
 	photons[photonID].position_ws = vec4(Pos, 1.f);
 	photons[photonID].normal_ws = vec4(Dir, 0.f);
 	
