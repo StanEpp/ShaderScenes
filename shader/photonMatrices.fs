@@ -10,49 +10,62 @@ struct Photon{
 flat in vec2 texCoord;
 flat in uint photonID;
 
-layout (std430, binding = 1) buffer PhotonBuffer {
+layout (std430, binding = 2) buffer PhotonBuffer {
 	Photon photons[];
 };
 
-layout(location = 0) uniform sampler2D posTexture;
-layout(location = 1) uniform sampler2D normalTexture;
+layout(binding = 0) uniform sampler2D posTexture;
+layout(binding = 1) uniform sampler2D normalTexture;
+
+uniform mat4 sg_matrix_worldToCamera; //Matrix which is provided from the 
 
 out vec4 color;
 
 void main(void) {
-	//vec3 Dir = vec3(0.f, 0.f, -1.f);
-	//vec3 Dir = texture(normalTexture, texCoord).xyz; //Samples from posTexture anyway
-	vec3 Dir = texture(normalTexture, vec2(0.5f, 0.5f)).xyz; //Samples from posTexture anyway
-	
+	// vec3 Dir = vec3(0.f, 1.f, 0.f);
+	// vec3 Dir = texture(normalTexture, texCoord).xyz;
+	vec3 Dir = texture(normalTexture, vec2(0.5f, 0.5f)).xyz;
 	if(length(Dir) < 0.01f){
 		return;
 	}
+	Dir = normalize(Dir);
 	
-	// vec3 Pos = vec3(12.5f, 14.89f, -31.0577f); 
+	// Taken from: MinSG::Transformations::rotateToWorldDir()
+	vec3 relRight = vec3(0);
+	vec3 relDir = -1.f * Dir;
+	if(abs(relDir.y) < 0.99f ){
+		relRight = cross(relDir, vec3(0, 1, 0));
+	} else {
+		relRight = cross(relDir, vec3(1, 0, 0));
+	}
+	vec3 Up = cross(relDir, -1.f * relRight);
+	
+	
+	// vec3 Pos = vec3(95, 0, 0); 
 	// vec3 Pos = texture(posTexture, texCoord).xyz;
 	vec3 Pos = texture(posTexture, vec2(0.5f, 0.5f)).xyz;
-	vec3 Up = vec3(0.f, 1.f, 0.f);
 	
-	vec3 bZ = normalize(-1.f * Dir);
+	// Taken from: Geometry::_Matrix3x3::setRotation()
+	vec3 bZ = -1.f * Dir;
 	vec3 bX = normalize(cross(Up, bZ));
 	vec3 bY = cross(bZ, bX);
 	
 	mat4x4 mat = mat4x4(1.f);
 	
-	// mat[0] = vec4(bX, 0);
-	// mat[1] = vec4(bY, 0);
-	// mat[2] = vec4(bZ, 0);
+	mat[0] = vec4(bX, 0);
+	mat[1] = vec4(bY, 0);
+	mat[2] = vec4(bZ, 0);
+	mat[3] = vec4(-1.f * Pos, 1);
+	
+	// mat[0] = vec4(tempMat[0], 0);
+	// mat[1] = vec4(tempMat[1], 0);
+	// mat[2] = vec4(tempMat[2], 0);
 	// mat[3] = vec4(-1.f * Pos, 1);
 	
-	mat[0] = vec4(Dir, 0);
-	mat[1] = vec4(2);
-	mat[2] = vec4(3);
-	mat[3] = vec4(Pos, 1);
-	
-	photons[photonID].viewMat = mat;
+	photons[photonID].viewMat = sg_matrix_worldToCamera;
 	photons[photonID].position_ws = vec4(Pos, 1.f);
-	photons[photonID].normal_ws = vec4(normalize(Dir), 0.f);
+	photons[photonID].normal_ws = vec4(Dir, 0.f);
 	
-	color = vec4(1);
+	//color = vec4(1); //Only for debug purposes. It paints the pixel white which corresponds to this samplePoint on the screen texture.
 	
 }

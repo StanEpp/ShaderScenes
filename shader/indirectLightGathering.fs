@@ -123,10 +123,9 @@ void main(void){
 	sg_initSurfaceFromSGMaterial(surface);
 	
 	vec4 diffLightSum = vec4(0.0);
-	if(lightPatch.x == 0) diffLightSum = vec4(normal_cs, 0.0);
 	
-	Photon p = photons[photonID];
-	if(length(p.normal_ws) > 0.01f){
+	//Photon p = photons[photonID];
+	//if(length(p.normal_ws) > 0.01f){
 		while(lightPatch != 0){
 			uint lightIDBitMask = 1 << (lightID-1);
 			uint lightIsUsed = lightPatch & lightIDBitMask;
@@ -138,7 +137,9 @@ void main(void){
 			lightPatch &= ~(lightIDBitMask); 
 			lightID++;
 		}
-	}
+	//}
+	
+	diffLightSum = vec4(normal_cs, 0.0); //Render only normal. Only for debug purposes!
 	
 	outValue = diffLightSum;
 	outNormal = vec4(normal_cs, 0.0);
