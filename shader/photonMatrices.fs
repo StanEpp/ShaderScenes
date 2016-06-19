@@ -19,6 +19,7 @@ layout(binding = 1) uniform sampler2D normalTexture;
 
 uniform mat4 sg_matrix_worldToCamera; //Matrix which is provided from the 
 uniform mat4 sg_matrix_modelToClipping;
+uniform mat4 tempMat;
 
 out vec4 color;
 
@@ -26,6 +27,7 @@ void main(void) {
 	// vec3 Dir = vec3(0.f, 1.f, 0.f);
 	// vec3 Dir = texture(normalTexture, texCoord).xyz;
 	vec3 Dir = texture(normalTexture, vec2(0.5f, 0.5f)).xyz;
+	photons[photonID].normal_ws = vec4(Dir, 0.f);
 	if(length(Dir) < 0.01f){
 		return;
 	}
@@ -59,12 +61,13 @@ void main(void) {
 	mat[0] = vec4(bX, 0);
 	mat[1] = vec4(bY, 0);
 	mat[2] = vec4(bZ, 0);
-	mat[3] = vec4(-1.f * Pos, 1);
+	mat[3] = vec4(Pos, 1);
 	// -----------------------------------------------------------------------------------------------------
+
 	
-	photons[photonID].viewMat = mat;
+	photons[photonID].viewMat = inverse(mat);
 	photons[photonID].position_ws = vec4(Pos, 1.f);
-	photons[photonID].normal_ws = vec4(Dir, 0.f);
+	// photons[photonID].normal_ws = vec4(Dir, 0.f);
 	
 	//color = vec4(1); //Only for debug purposes. It paints the pixel white which corresponds to this samplePoint on the screen texture.
 	

@@ -47,7 +47,8 @@ uniform sampler2D	sg_specularMap;
 uniform sampler2D	sg_normalMap;
 uniform sampler2D 	sg_shadowTexture;
 
-layout(binding = 0) uniform isampler2D	samplingTexture;
+layout(binding = 2) uniform isampler2D	samplingTexture;
+uniform int samplingTextureSize;
 
 layout (std430, binding = 1) buffer PhotonBuffer {
 	Photon photons[];
@@ -381,24 +382,29 @@ void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lig
 	indirectPointLight.linear = 0.f;
 	indirectPointLight.quadratic = 0.f;
 	
-	ivec2 size = ivec2(12, 12);//TODO: Add size as uniform
+	ivec2 size = ivec2(samplingTextureSize, samplingTextureSize);//TODO: Add size as uniform
 	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
 	scPos.x /= 1280.f; scPos.y /= 720.f;
 	
 	ivec2 sPos = ivec2(int(float(size.x) * scPos.x), int(float(size.y) * scPos.y));
 	
-	for(int i = 0; i < 9; i++ ){
-		int ID = texelFetch(samplingTexture, sPos + 2 * _photonSamplingPos[i], 0).x;
-		//int ID = texelFetch(samplingTexture, ivec2(10,10) + _photonSamplingPos[i], 0).x;
-		if(ID < 0) continue;
-		Photon p = photons[i];
-		if(p.diffuse.a < 0.1f) continue;
-		indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
-		indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
-		indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
-		addLighting(indirectPointLight, surface.position_cs, surface.normal_cs, 0, lightSum);
-	}
-	
+	// for(int i = 0; i < 9; i++ ){
+		// int ID = texelFetch(samplingTexture, sPos + 2 * _photonSamplingPos[i], 0).x;
+		// //int ID = texelFetch(samplingTexture, ivec2(10,10) + _photonSamplingPos[i], 0).x;
+		// if(ID < 0) continue;
+		// Photon p = photons[i];
+		// if(p.diffuse.a < 0.1f) continue;
+		// indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
+		// indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
+		// indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
+		// addLighting(indirectPointLight, surface.position_cs, surface.normal_cs, 0, lightSum);
+	// }
+	float ID1 = float(texelFetch(samplingTexture, ivec2(5,5), 0).x);
+	float ID2 = float(texelFetch(samplingTexture, ivec2(6,5), 0).x);
+	float ID3 = float(texelFetch(samplingTexture, ivec2(7,5), 0).x);
+	float ID4 = float(texelFetch(samplingTexture, ivec2(8,5), 0).x);
+	float ID5 = texture(samplingTexture, vec2(0.5, 0.5)).x;
+	photons[0].diffuse = vec4(ID1, ID2, ID3, 3.14);
 }
 
 void calcLighting(in SurfaceProperties surface, out CompositeColor color){

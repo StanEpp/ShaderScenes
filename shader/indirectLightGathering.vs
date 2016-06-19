@@ -42,5 +42,5 @@ void main(void){
 	
 	gl_Position = sg_matrix_cameraToClipping * viewMat * modelToWorldMat * vec4(sg_Position, 1.0);
 	
-	//photons[photonID].viewMat = modelToWorldMat;
+	//photons[photonID].viewMat = sg_matrix_worldToCamera;
 }
