@@ -28,6 +28,7 @@ struct Photon{
 	mat4 viewMat;
 	vec4 diffuse;
 	vec4 position_ws;
+	vec4 position_ss;
 	vec4 normal_ws;
 };
 
