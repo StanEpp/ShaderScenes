@@ -495,7 +495,7 @@ void calcIndirectLightingVP(in SurfaceProperties surface, inout CompositeColor l
 	indirectPointLight.specular = vec4(0);
 	indirectPointLight.constant = 1.0f;
 	indirectPointLight.linear = 0.05f;
-	indirectPointLight.quadratic = 0.001f;
+	indirectPointLight.quadratic = 0.01f;
 	
 	ivec2 size = ivec2(samplingTextureSize, samplingTextureSize);
 	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
@@ -543,7 +543,7 @@ void calcLighting(in SurfaceProperties surface, out CompositeColor color){
 	
 	// Compute indirect lighting from photons
 	CompositeColor indirectLightSum;
-	calcIndirectLightingVP(surface, indirectLightSum);
+	calcIndirectLighting(surface, indirectLightSum);
 
 	lightSum.ambient.a = lightSum.diffuse.a = lightSum.specular.a = 1.0;
 	indirectLightSum.ambient.a = indirectLightSum.diffuse.a = indirectLightSum.specular.a = 1.0;

@@ -1,5 +1,5 @@
 var node = PADrend.loadScene("ThesisStanislaw/ShaderScenes/scenes/crytek-sponza-minsg/sponza.minsg");
-var approxNode = PADrend.loadScene("ThesisStanislaw/ShaderScenes/scenes/sponzaApprox/sponza_Approx_low.dae");
+var approxNode = PADrend.loadScene("ThesisStanislaw/ShaderScenes/scenes/sponzaApprox/sponza_Approx_55k.dae");
 approxNode.removeStates();
 
 var lights = MinSG.collectLightNodes(node);
@@ -18,7 +18,7 @@ lightPatchRenderer.setCamera(PADrend.getActiveCamera());
 var photonSampler = new MinSG.ThesisStanislaw.PhotonSampler;
 photonSampler.setApproximatedScene(approxNode);
 photonSampler.setCamera(PADrend.getActiveCamera());
-photonSampler.setPhotonNumber(1000);
+photonSampler.setPhotonNumber(10);
 //photonSampler.deactivate();
 
 var phongGI = new MinSG.ThesisStanislaw.PhongGI;
@@ -27,7 +27,7 @@ phongGI.setPhotonSampler(photonSampler);
 
 var photonRenderer = new MinSG.ThesisStanislaw.PhotonRenderer();
 photonRenderer.setApproximatedScene(approxNode);
-photonRenderer.setSamplingResolution(32,32);
+photonRenderer.setSamplingResolution(16,16);
 photonRenderer.setLightPatchRenderer(lightPatchRenderer); 
 photonRenderer.setPhotonSampler(photonSampler);
 photonRenderer.setSpotLights(spotLights);

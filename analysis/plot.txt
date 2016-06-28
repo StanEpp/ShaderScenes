@@ -1,0 +1,11 @@
+set term png medium
+unset key
+set output "10P16x16R.png"
+set title "10 Photons ; 16x16 Photon Sampling Resolution"
+set grid
+set xlabel "Number of Polygons in Thousands"
+set ylabel "FPS"
+set xrange [0: 235]
+set xtics 0,10,235
+set xtics rotate
+plot "output.dat" using 1:2:3:4 linewidth 1 pt 5 ps 1 with yerrorbars
