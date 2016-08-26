@@ -459,7 +459,7 @@ void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lig
 	indirectPointLight.constant = 1.0f;
 	indirectPointLight.linear = 0.f;
 	indirectPointLight.quadratic = 0.005f;
-	
+	 
 	ivec2 size = ivec2(samplingTextureSize, samplingTextureSize);
 	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
 	scPos.x /= 1280.f; scPos.y /= 720.f;

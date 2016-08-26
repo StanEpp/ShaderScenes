@@ -18,7 +18,8 @@ lightPatchRenderer.setCamera(PADrend.getActiveCamera());
 var photonSampler = new MinSG.ThesisStanislaw.PhotonSampler;
 photonSampler.setApproximatedScene(approxNode);
 photonSampler.setCamera(PADrend.getActiveCamera());
-photonSampler.setPhotonNumber(10);
+photonSampler.setPhotonNumber(100);
+photonSampler.setSamplingStrategy(MinSG.ThesisStanislaw.PhotonSampler.UNIFORM);
 //photonSampler.deactivate();
 
 var phongGI = new MinSG.ThesisStanislaw.PhongGI;

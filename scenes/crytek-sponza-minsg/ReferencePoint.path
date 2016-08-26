@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene version="2.9">
+	<node id="$7LUAIn" looping="true" type="path">
+		<data dir="-0.00705805 0.232111 0.972664" pos="-24.695 19.7275 3.81344" scale="1.00002" time="0" type="waypoint" up="0.00168458 0.972689 -0.232105"/>
+	</node>
+</scene>
