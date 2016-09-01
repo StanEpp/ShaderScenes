@@ -34,6 +34,7 @@ struct Photon{
 
 smooth in vec3 normal_cs;
 smooth in vec3 position_cs;
+smooth in vec3 position_ws;
 smooth in vec3 vertexColor;
 flat in int ex_PolygonID;
 
@@ -84,15 +85,23 @@ void addLighting(in sg_LightSourceParameters light, in vec3 position_cs, in vec3
 	}
 }
 
-void calcLighting(in uint sgLightNr, in SurfaceProperties surface, inout vec4 diffLightSum){
+void calcLighting(in uint sgLightNr, in SurfaceProperties surface, inout vec4 diffLightSum, Photon p){
 	sg_LightSourceParameters light = sg_LightSource[sgLightNr];
 	light.position = (photons[photonID].viewMat * vec4(light.position, 1)).xyz;
 	light.direction = (photons[photonID].viewMat * vec4(light.direction, 0)).xyz;
 	
-	addLighting(light,surface.position_cs, surface.normal_cs, surface.shininess, diffLightSum);
-
-	diffLightSum = surface.diffuse * diffLightSum + surface.emission;
+	vec4 lightSum = vec4(0.0);
 	
+	addLighting(light,surface.position_cs, surface.normal_cs, surface.shininess, lightSum);
+
+	lightSum = surface.diffuse * lightSum + surface.emission;
+	
+	vec3 pixToPhoton = position_ws - p.position_ws.xyz;
+	vec3 pixDir = normalize(position_ws - p.position_ws.xyz);
+	float distPixToPhoton = length(position_ws - p.position_ws.xyz);
+	lightSum =  lightSum * (1.0f/(1.0f + distPixToPhoton * 0.001f)) * dot(p.normal_ws.xyz, pixDir);
+	
+	diffLightSum += lightSum;
 	diffLightSum.a = 1.0;
 }
 
@@ -104,7 +113,7 @@ void sg_initSurfaceFromSGMaterial(inout SurfaceProperties surface){
 	surface.emission = vec4(0.0);
 	surface.shininess = 0.0f;
 	
-	if(sg_useMaterials){	
+	if(sg_useMaterials){
 		surface.diffuse = sg_Material.diffuse;
 		surface.diffuse *= vec4(vertexColor, 0.0);
 	} else {
@@ -132,7 +141,7 @@ void main(void){
 			uint lightIsUsed = lightPatch & lightIDBitMask;
 			
 			if(lightIsUsed != 0){
-				calcLighting(lightID, surface, diffLightSum);
+				calcLighting(lightID, surface, diffLightSum, p);
 			}
 			
 			lightPatch &= ~(lightIDBitMask); 

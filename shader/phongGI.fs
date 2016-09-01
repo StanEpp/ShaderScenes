@@ -457,8 +457,8 @@ void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lig
 	indirectPointLight.ambient = vec4(0);
 	indirectPointLight.specular = vec4(0);
 	indirectPointLight.constant = 1.0f;
-	indirectPointLight.linear = 0.f;
-	indirectPointLight.quadratic = 0.005f;
+	indirectPointLight.linear = 0.0f;
+	indirectPointLight.quadratic = 0.001f;
 	 
 	ivec2 size = ivec2(samplingTextureSize, samplingTextureSize);
 	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
@@ -475,7 +475,7 @@ void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lig
 				if(p.diffuse.a > 0.8f){
 					indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
 					indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
-					indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a * 2.f;
+					indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
 					//indirectPointLight.quadratic = (length(p.position_ss.xy - scPos)/1.41421356237f) * 0.005f; //length(vec4(surface.position_cs, 1).xyz - indirectPointLight.position)/500.f;// 
 					
 					addIndirectLighting(indirectPointLight, surface.position_cs, surface.normal_cs, lightSum);

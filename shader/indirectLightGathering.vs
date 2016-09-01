@@ -28,6 +28,7 @@ uniform int photonID;
 
 smooth out vec3 normal_cs;
 smooth out vec3 position_cs;
+smooth out vec3 position_ws;
 smooth out vec3 vertexColor; 
 flat out int ex_PolygonID;
 
@@ -38,6 +39,7 @@ void main(void){
 	ex_PolygonID = int(sg_PolygonID);
 	vertexColor = sg_Color;
 	
+	position_ws = (modelToWorldMat * vec4(sg_Position, 1.0)).xyz;
 	position_cs = (viewMat * modelToWorldMat * vec4(sg_Position, 1.0)).xyz;
 	normal_cs = normalize((viewMat * modelToWorldMat * vec4(sg_Normal, 0.0)).xyz);
 	

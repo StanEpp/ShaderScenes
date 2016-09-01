@@ -43,7 +43,6 @@ void main(void) {
 	
 	
 	vec3 Pos = texture(posTexture, texCoord).xyz;
-	//vec3 Pos = texture(posTexture, vec2(0.5f, 0.5f)).xyz;
 	
 	// 
 	// ---------------------- Taken from: Geometry::_Matrix3x3::setRotation() ---------------------------
@@ -64,7 +63,6 @@ void main(void) {
 	photons[photonID].position_ws = vec4(Pos, 1.f);
 	photons[photonID].normal_ws = vec4(Dir, 0.f);
 	
-	//vec2 screenPos = texCoord * 2.f - vec2(1.f, 1.f);
 	photons[photonID].position_ss = vec4(texCoord, 3.14f, 0.f);
 	
 	//color = vec4(1); //Only for debug purposes. It paints the pixel white which corresponds to this samplePoint on the screen texture.
