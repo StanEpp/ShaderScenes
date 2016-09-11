@@ -96,11 +96,6 @@ void calcLighting(in uint sgLightNr, in SurfaceProperties surface, inout vec4 di
 
 	lightSum = surface.diffuse * lightSum + surface.emission;
 	
-	vec3 pixToPhoton = position_ws - p.position_ws.xyz;
-	vec3 pixDir = normalize(position_ws - p.position_ws.xyz);
-	float distPixToPhoton = length(position_ws - p.position_ws.xyz);
-	lightSum =  lightSum * (1.0f/(1.0f + distPixToPhoton * 0.001f)) * dot(p.normal_ws.xyz, pixDir);
-	
 	diffLightSum += lightSum;
 	diffLightSum.a = 1.0;
 }
@@ -148,6 +143,11 @@ void main(void){
 			lightID++;
 		}
 	}
+	
+	vec3 pixToPhoton = position_ws - p.position_ws.xyz;
+	vec3 pixDir = normalize(position_ws - p.position_ws.xyz);
+	float distPixToPhoton = length(position_ws - p.position_ws.xyz);
+	diffLightSum *= (1.0f/(1.0f + distPixToPhoton * 0.000001f)) * dot(p.normal_ws.xyz, pixDir);
 	
 	//diffLightSum = vec4(normal_cs, 0.0); //Render only normal. Only for debug purposes!
 	

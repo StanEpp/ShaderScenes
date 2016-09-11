@@ -16,6 +16,8 @@ layout (std430, binding = 1) buffer PhotonBuffer {
 };
 
 uniform int photonID;
+uniform int samplingWidth;
+uniform int samplingHeight;
 
 layout(location = 0) uniform sampler2D indirectLightTex;
 
@@ -24,8 +26,8 @@ void main(void){
 	
 	if (indirectLight.a < 0.1f) return;
 
+	photons[photonID].diffuse.a = float(samplingWidth * samplingHeight);
 	atomicAdd(photons[photonID].diffuse.r, indirectLight.r);
 	atomicAdd(photons[photonID].diffuse.g, indirectLight.g);
 	atomicAdd(photons[photonID].diffuse.b, indirectLight.b);
-	atomicAdd(photons[photonID].diffuse.a, 1.f);
 }

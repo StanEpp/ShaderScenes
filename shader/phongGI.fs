@@ -451,38 +451,45 @@ void addIndirectLighting(in sg_LightSourceParameters light, in vec3 position_cs,
 void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lightSum){
 	sg_LightSourceParameters indirectPointLight;
 	
+	float bias = 0.5; // The amount the photon gets moved along the normal to move it out of geometry.
 	// Treat photons as point light sources
 	indirectPointLight.type = POINT;
 	indirectPointLight.diffuse = vec4(0);
 	indirectPointLight.ambient = vec4(0);
 	indirectPointLight.specular = vec4(0);
-	indirectPointLight.constant = 1.0f;
+	indirectPointLight.constant = 0.75;
 	indirectPointLight.linear = 0.0f;
-	indirectPointLight.quadratic = 0.001f;
-	 
-	ivec2 size = ivec2(samplingTextureSize, samplingTextureSize);
+	indirectPointLight.quadratic = 0.0000005f;
+	
 	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
 	scPos.x /= 1280.f; scPos.y /= 720.f;
-	float divisor = 1280.f/float(samplingTextureSize);
-	ivec2 sPos = ivec2(int(float(size.x) * scPos.x), int(float(size.y) * scPos.y));
+	ivec2 sPos = ivec2(int(float(samplingTextureSize) * scPos.x), int(float(samplingTextureSize) * scPos.y));
+	int missedSamples = 0;
 	
 	for(int i = 0; i < 25; i++ ){
 		ivec2 samplingPos = sPos + _photonSamplingPos[i];
+		int ID = -1;
 		if(samplingPos.x >= 0 && samplingPos.x < samplingTextureSize && samplingPos.y >= 0 && samplingPos.y < samplingTextureSize){
-			int ID = texelFetch(samplingTexture, samplingPos, 0).x;
-			if(ID >= 0){
-				Photon p = photons[ID];
-				if(p.diffuse.a > 0.8f){
-					indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
-					indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
-					indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
-					//indirectPointLight.quadratic = (length(p.position_ss.xy - scPos)/1.41421356237f) * 0.005f; //length(vec4(surface.position_cs, 1).xyz - indirectPointLight.position)/500.f;// 
-					
-					addIndirectLighting(indirectPointLight, surface.position_cs, surface.normal_cs, lightSum);
-				}
+			ID = texelFetch(samplingTexture, samplingPos, 0).x;
+		} else {
+			missedSamples++;
+		}
+		
+		if(ID >= 0){
+			Photon p = photons[ID];
+			if(p.diffuse.a > 0.8f){
+				indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
+				indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
+				indirectPointLight.position += normalize(indirectPointLight.direction) * (bias);
+				indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
+				
+				addIndirectLighting(indirectPointLight, surface.position_cs, surface.normal_cs, lightSum);
 			}
 		}
 	}
+	
+	//Compensate for missed samples
+	lightSum.diffuse += (float(missedSamples)/25.f) * lightSum.diffuse;
 }
 
 void calcIndirectLightingVP(in SurfaceProperties surface, inout CompositeColor lightSum){
