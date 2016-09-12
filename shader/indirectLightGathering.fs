@@ -147,7 +147,7 @@ void main(void){
 	vec3 pixToPhoton = position_ws - p.position_ws.xyz;
 	vec3 pixDir = normalize(position_ws - p.position_ws.xyz);
 	float distPixToPhoton = length(position_ws - p.position_ws.xyz);
-	diffLightSum *= (1.0f/(1.0f + distPixToPhoton * 0.000001f)) * dot(p.normal_ws.xyz, pixDir);
+	diffLightSum *= (1.0f/(0.25f + distPixToPhoton * 0.0005f)) * dot(p.normal_ws.xyz, pixDir);
 	
 	//diffLightSum = vec4(normal_cs, 0.0); //Render only normal. Only for debug purposes!
 	

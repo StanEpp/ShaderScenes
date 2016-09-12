@@ -426,7 +426,7 @@ float getShadow() {
 	return sum;
 }
 
-void addIndirectLighting(in sg_LightSourceParameters light, in vec3 position_cs, in vec3 normal_cs, inout CompositeColor result){
+void addIndirectLighting(in sg_LightSourceParameters light, in vec3 position_cs, in vec3 normal_cs, inout CompositeColor result, float attenuation_sc){
 	// for DIRECTIONAL lights
 	float distPixToLight = 0.0; 
 	float attenuation = 1.0;
@@ -444,27 +444,46 @@ void addIndirectLighting(in sg_LightSourceParameters light, in vec3 position_cs,
 	
 	float norDotPixToLight = max(0.0, dot(normal_cs, pixToLight));
 	if(norDotPixToLight != 0.0){
-		result.diffuse += light.diffuse * norDotPixToLight * attenuation;
+		result.diffuse += light.diffuse * norDotPixToLight * attenuation * attenuation_sc;
+	}
+}
+
+//Computation taken out of paper "Reflective Shadow Maps"
+void addIndirectLightingRSM(in sg_LightSourceParameters light, in vec3 position_cs, in vec3 normal_cs, inout CompositeColor result, float attenuation_sc){
+	
+	vec3 pointToPhoton = light.position - position_cs;
+	
+	result.ambient = vec4(0);
+	
+	float dotPointToPhoton = max(0.0, dot(normal_cs, pointToPhoton));
+	if(dotPointToPhoton != 0.0){
+		
+		vec3 photonToPoint = position_cs - light.position;
+		float dotPhotonToPoint = max(0.0, dot(light.direction, photonToPoint));
+		
+		result.diffuse += light.diffuse * dotPointToPhoton * dotPhotonToPoint * (1.f / pow(length(photonToPoint), 4)) * attenuation_sc;
 	}
 }
 
 void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lightSum){
 	sg_LightSourceParameters indirectPointLight;
 	
-	float bias = 0.5; // The amount the photon gets moved along the normal to move it out of geometry.
+	float bias = 1.f; // The amount the photon gets moved along the normal to move it out of geometry.
 	// Treat photons as point light sources
 	indirectPointLight.type = POINT;
 	indirectPointLight.diffuse = vec4(0);
 	indirectPointLight.ambient = vec4(0);
 	indirectPointLight.specular = vec4(0);
-	indirectPointLight.constant = 0.75;
+	indirectPointLight.constant = 1.f;
 	indirectPointLight.linear = 0.0f;
-	indirectPointLight.quadratic = 0.0000005f;
+	indirectPointLight.quadratic = 0.0001f;
 	
 	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
-	scPos.x /= 1280.f; scPos.y /= 720.f;
+	scPos.x /= 1280.f; scPos.y /= 740.f;
 	ivec2 sPos = ivec2(int(float(samplingTextureSize) * scPos.x), int(float(samplingTextureSize) * scPos.y));
 	int missedSamples = 0;
+
+	float attenuation_sc = 1.f;
 	
 	for(int i = 0; i < 25; i++ ){
 		ivec2 samplingPos = sPos + _photonSamplingPos[i];
@@ -479,50 +498,19 @@ void calcIndirectLighting(in SurfaceProperties surface, inout CompositeColor lig
 			Photon p = photons[ID];
 			if(p.diffuse.a > 0.8f){
 				indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
-				indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
+				indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz; // normal of the photon
 				indirectPointLight.position += normalize(indirectPointLight.direction) * (bias);
 				indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a;
 				
-				addIndirectLighting(indirectPointLight, surface.position_cs, surface.normal_cs, lightSum);
+				attenuation_sc = 1.f - (length(scPos - p.position_ss.xy)/1.41421356237f);
+				
+				addIndirectLighting(indirectPointLight, surface.position_cs, surface.normal_cs, lightSum, attenuation_sc);
 			}
 		}
 	}
 	
 	//Compensate for missed samples
 	lightSum.diffuse += (float(missedSamples)/25.f) * lightSum.diffuse;
-}
-
-void calcIndirectLightingVP(in SurfaceProperties surface, inout CompositeColor lightSum){
-	sg_LightSourceParameters indirectPointLight;
-	
-	// Treat photons as point light sources
-	indirectPointLight.type = POINT;
-	indirectPointLight.diffuse = vec4(0);
-	indirectPointLight.ambient = vec4(0);
-	indirectPointLight.specular = vec4(0);
-	indirectPointLight.constant = 1.0f;
-	indirectPointLight.linear = 0.05f;
-	indirectPointLight.quadratic = 0.01f;
-	
-	ivec2 size = ivec2(samplingTextureSize, samplingTextureSize);
-	vec2 scPos = gl_FragCoord.xy - vec2(0.5);
-	scPos.x /= 1280.f; scPos.y /= 720.f;
-	float divisor = 1280.f/float(samplingTextureSize);
-	ivec2 sPos = ivec2(int(float(size.x) * scPos.x), int(float(size.y) * scPos.y));
-	
-	for(int i = 0; i < samplingTextureSize * samplingTextureSize; i++ ){
-		Photon p = photons[i];
-		if(p.diffuse.a > 0.8f){
-			indirectPointLight.position = (sg_matrix_worldToCamera * p.position_ws).xyz;
-			indirectPointLight.direction = (sg_matrix_worldToCamera * p.normal_ws).xyz;
-			indirectPointLight.diffuse.rgb = p.diffuse.rgb / p.diffuse.a * 2.f;
-			//indirectPointLight.quadratic = (length(p.position_ss.xy - scPos)/1.41421356237f) * 0.005f; 
-			//indirectPointLight.quadratic = length(vec4(surface.position_cs, 1).xyz - indirectPointLight.position)/1000.f;
-			
-			addIndirectLighting(indirectPointLight, surface.position_cs, surface.normal_cs, lightSum);
-			
-		}
-	}
 }
 
 void calcLighting(in SurfaceProperties surface, out CompositeColor color){
