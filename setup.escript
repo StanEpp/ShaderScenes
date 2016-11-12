@@ -1,5 +1,15 @@
+/*
+	This file is part of the MinSG library.
+	Copyright (C) 20016 Stanislaw Eppinger
+	Copyright (C) 20016 Sascha Brandt
+
+	This library is subject to the terms of the Mozilla Public License, v. 2.0.
+	You should have received a copy of the MPL along with this library; see the
+	file LICENSE. If not, you can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
 var node = PADrend.loadScene("ThesisStanislaw/ShaderScenes/scenes/crytek-sponza-minsg/sponza.minsg");
-var approxNode = PADrend.loadScene("ThesisStanislaw/ShaderScenes/scenes/sponzaApprox/sponza_Approx_55k.dae");
+var approxNode = PADrend.loadScene("ThesisStanislaw/ShaderScenes/scenes/sponzaApprox/sponza_Approx_230k.dae");
 approxNode.removeStates();
 
 var lights = MinSG.collectLightNodes(node);
@@ -18,7 +28,7 @@ lightPatchRenderer.setCamera(PADrend.getActiveCamera());
 var photonSampler = new MinSG.ThesisStanislaw.PhotonSampler;
 photonSampler.setApproximatedScene(approxNode);
 photonSampler.setCamera(PADrend.getActiveCamera());
-photonSampler.setPhotonNumber(100);
+photonSampler.setPhotonNumber(50);
 photonSampler.setSamplingStrategy(MinSG.ThesisStanislaw.PhotonSampler.UNIFORM);
 //photonSampler.deactivate();
 
@@ -28,7 +38,7 @@ phongGI.setPhotonSampler(photonSampler);
 
 var photonRenderer = new MinSG.ThesisStanislaw.PhotonRenderer();
 photonRenderer.setApproximatedScene(approxNode);
-photonRenderer.setSamplingResolution(16,16);
+photonRenderer.setSamplingResolution(8, 8);
 photonRenderer.setLightPatchRenderer(lightPatchRenderer); 
 photonRenderer.setPhotonSampler(photonSampler);
 photonRenderer.setSpotLights(spotLights);
